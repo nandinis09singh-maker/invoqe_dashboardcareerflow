@@ -1,0 +1,16 @@
+{
+  "name": "careerflow",
+  "version": "1.0.0",
+  "description": "CareerFlow - Production-grade Job Search & Career Platform",
+  "scripts": {
+    "dev": "concurrently -n \"SERVER,CLIENT\" -c \"blue,green\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "start": "concurrently -n \"SERVER,CLIENT\" -c \"blue,green\" \"npm start --prefix server\" \"npm run preview --prefix client\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client",
+    "seed": "npm run seed --prefix server",
+    "build": "npm run build --prefix client",
+    "test": "npm test --prefix server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
