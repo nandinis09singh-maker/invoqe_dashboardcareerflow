@@ -29,6 +29,7 @@ import Footer from '../components/layout/Footer';
 import Button from '../components/ui/Button';
 import JobCard from '../components/jobs/JobCard';
 import api from '../api/axios';
+import { fetchJobsList } from '../utils/jobService';
 
 const CATEGORIES = [
   { name: 'Engineering', count: '35+ Jobs', icon: Terminal, accent: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-950/60' },
@@ -77,9 +78,9 @@ export default function LandingPage() {
   useEffect(() => {
     async function fetchFeatured() {
       try {
-        const res = await api.get('/jobs?limit=6&sort=newest');
-        if (res.data.success) {
-          setFeaturedJobs(res.data.jobs);
+        const data = await fetchJobsList({ limit: 6, sort: 'newest' });
+        if (data.jobs && data.jobs.length > 0) {
+          setFeaturedJobs(data.jobs);
         }
       } catch (e) {
         console.error('Failed to load featured jobs', e);
@@ -224,19 +225,21 @@ export default function LandingPage() {
       </section>
 
       {/* TOP TECH HIRING COMPANIES ROW */}
-      <section className="py-8 border-b border-slate-200/70 dark:border-slate-800/80 bg-white/60 dark:bg-slate-900/40">
+      <section id="top-companies" className="py-10 border-b border-slate-200/70 dark:border-slate-800/80 bg-white/60 dark:bg-slate-900/40 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-5">
-            Verified Opportunities from India&apos;s Leading Engineering Teams
+            Verified Opportunities from India&apos;s Leading Engineering Teams • Click Any Company to View Openings
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 opacity-75 grayscale hover:grayscale-0 transition-all">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6">
             {['Razorpay', 'Swiggy', 'Cred', 'Zerodha', 'Flipkart', 'PhonePe', 'Zomato', 'Stripe'].map((brand) => (
-              <span
+              <button
                 key={brand}
-                className="text-base sm:text-lg font-extrabold tracking-tight text-slate-700 dark:text-slate-300 hover:text-brand-600 transition-colors cursor-default"
+                type="button"
+                onClick={() => navigate(`/jobs?search=${encodeURIComponent(brand)}`)}
+                className="px-4 py-2 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 hover:shadow-sm transition-all cursor-pointer hover:scale-105 active:scale-95"
               >
                 {brand}
-              </span>
+              </button>
             ))}
           </div>
         </div>

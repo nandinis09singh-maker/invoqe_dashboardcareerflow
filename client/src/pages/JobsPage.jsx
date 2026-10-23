@@ -17,6 +17,7 @@ import { JobCardSkeleton } from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
 import api from '../api/axios';
+import { fetchJobsList, fetchFilterMeta } from '../utils/jobService';
 
 export default function JobsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,9 +73,9 @@ export default function JobsPage() {
   useEffect(() => {
     async function loadMeta() {
       try {
-        const res = await api.get('/jobs/meta/filters');
-        if (res.data.success) {
-          setMetaFilters(res.data.filters);
+        const filters = await fetchFilterMeta();
+        if (filters) {
+          setMetaFilters(filters);
         }
       } catch (e) {
         console.error('Failed to load filter metadata', e);
@@ -102,13 +103,12 @@ export default function JobsPage() {
         limit: 9
       };
 
-      const res = await api.get('/jobs', { params });
-      if (res.data.success) {
-        setJobs(res.data.jobs);
-        setPagination(res.data.pagination);
-      }
+      const data = await fetchJobsList(params);
+      setJobs(data.jobs || []);
+      setPagination(data.pagination || { total: 0, page: 1, totalPages: 1, limit: 9 });
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load jobs. Please try again.');
+      console.error('Error fetching jobs:', err);
+      setError(err.message || 'Failed to load jobs. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -216,6 +216,37 @@ export default function JobsPage() {
 
         {/* JOBS CONTENT AREA */}
         <div className="lg:col-span-3 space-y-6">
+          {/* Top Companies Quick Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
+            <span className="font-bold text-slate-500 dark:text-slate-400 shrink-0">Top Companies:</span>
+            {['Razorpay', 'Swiggy', 'Cred', 'Zerodha', 'Flipkart', 'PhonePe', 'Zomato', 'Stripe'].map((brand) => {
+              const isActive = (searchTerm || '').toLowerCase() === brand.toLowerCase();
+              return (
+                <button
+                  key={brand}
+                  type="button"
+                  onClick={() => setSearchTerm(isActive ? '' : brand)}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 border cursor-pointer ${
+                    isActive
+                      ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-brand-500 hover:text-brand-600'
+                  }`}
+                >
+                  {brand}
+                </button>
+              );
+            })}
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="text-xs text-brand-600 dark:text-brand-400 hover:underline shrink-0 ml-1 font-medium cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
           {/* Search box inline */}
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

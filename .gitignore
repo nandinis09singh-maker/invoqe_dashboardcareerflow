@@ -43,5 +43,8 @@ predictx/
 backend/
 supabase/
 LiquidCrystal_I2C/
-index.html
-vercel.json
+safe-upi/
+safe-upi.zip
+client/mac-club-apsit/
+/index.html
+/vercel.json

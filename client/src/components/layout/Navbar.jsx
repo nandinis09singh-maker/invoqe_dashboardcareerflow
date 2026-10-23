@@ -10,6 +10,21 @@ export default function Navbar() {
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
+  const handleNavScroll = (sectionId) => {
+    if (window.location.pathname === '/') {
+      const el = document.getElementById(sectionId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+    navigate(`/#${sectionId}`);
+    setTimeout(() => {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 150);
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -28,12 +43,20 @@ export default function Navbar() {
           <Link to="/jobs" className="hover:text-brand-600 dark:hover:text-brand-400 transition">
             Explore Jobs
           </Link>
-          <a href="#how-it-works" className="hover:text-brand-600 dark:hover:text-brand-400 transition">
+          <button
+            type="button"
+            onClick={() => handleNavScroll('preview')}
+            className="hover:text-brand-600 dark:hover:text-brand-400 transition cursor-pointer"
+          >
             How It Works
-          </a>
-          <a href="#featured" className="hover:text-brand-600 dark:hover:text-brand-400 transition">
+          </button>
+          <button
+            type="button"
+            onClick={() => handleNavScroll('top-companies')}
+            className="hover:text-brand-600 dark:hover:text-brand-400 transition cursor-pointer"
+          >
             Top Companies
-          </a>
+          </button>
         </nav>
 
         {/* Right side actions */}

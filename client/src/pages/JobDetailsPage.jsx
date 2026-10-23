@@ -20,6 +20,7 @@ import Button from '../components/ui/Button';
 import ApplyModal from '../components/jobs/ApplyModal';
 import JobCard from '../components/jobs/JobCard';
 import api from '../api/axios';
+import { fetchJobDetails } from '../utils/jobService';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -42,12 +43,14 @@ export default function JobDetailsPage() {
       try {
         setIsLoading(true);
         setError(null);
-        const res = await api.get(`/jobs/${id}`);
-        if (res.data.success) {
-          setJob(res.data.job);
-          setIsSaved(res.data.job.is_saved);
-          setIsApplied(res.data.job.is_applied);
-          setSimilarJobs(res.data.similar_jobs || []);
+        const data = await fetchJobDetails(id);
+        if (data.job) {
+          setJob(data.job);
+          setIsSaved(Boolean(data.job.is_saved));
+          setIsApplied(Boolean(data.job.is_applied));
+          setSimilarJobs(data.similarJobs || []);
+        } else {
+          setError('Job posting not found.');
         }
       } catch (err) {
         setError(err.response?.data?.message || 'Job posting not found.');
