@@ -16,6 +16,13 @@ import BulkActionToolbar from '../components/saved/BulkActionToolbar';
 import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
 import api from '../api/axios';
+import {
+  fetchSavedJobsList,
+  fetchCollectionsList,
+  removeSavedJob,
+  createCollectionDoc,
+  toggleJobSave
+} from '../utils/savedJobService';
 import toast from 'react-hot-toast';
 
 export default function SavedJobsPage() {

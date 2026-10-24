@@ -1,17 +1,21 @@
 import React from 'react';
-import { Filter, RotateCcw, MapPin, Briefcase, Award, DollarSign, Tag } from 'lucide-react';
+import { Filter, RotateCcw, MapPin, Briefcase, Award, DollarSign, Tag, Layers } from 'lucide-react';
 import Button from '../ui/Button';
 
 export default function JobFilters({
   filters,
   onChange,
   onReset,
-  metaFilters
+  metaFilters,
+  onApply
 }) {
+  const categoriesList = metaFilters?.categories || [
+    'Engineering', 'Design', 'Data & AI', 'DevOps & Cloud', 'Product', 'Marketing'
+  ];
   const jobTypes = ['Full-time', 'Remote', 'Internship', 'Contract', 'Part-time'];
   const expLevels = ['Entry Level', 'Mid Level', 'Senior Level', 'Lead / Staff', 'Director'];
 
-  const locationsList = metaFilters?.locations || ['Bengaluru', 'Delhi NCR', 'Mumbai', 'Hyderabad', 'Pune', 'Remote'];
+  const locationsList = metaFilters?.locations || ['Bengaluru', 'Delhi NCR', 'Mumbai', 'Hyderabad', 'Pune', 'Chennai', 'Remote'];
   const popularSkills = metaFilters?.skills?.slice(0, 15) || [
     'React', 'Node.js', 'TypeScript', 'Python', 'Go', 'Docker', 'PostgreSQL', 'AWS', 'Kubernetes', 'Tailwind CSS', 'Figma'
   ];
@@ -48,6 +52,32 @@ export default function JobFilters({
         </button>
       </div>
 
+      {/* Category / Department */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+          <Layers className="w-3.5 h-3.5" /> Category
+        </label>
+        <div className="flex flex-wrap gap-1.5">
+          {categoriesList.map((cat) => {
+            const isSelected = (filters.category || '').toLowerCase() === cat.toLowerCase();
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => onChange({ category: isSelected ? '' : cat })}
+                className={`text-xs px-2.5 py-1 rounded-lg border transition ${
+                  isSelected
+                    ? 'bg-brand-600 border-brand-600 text-white font-semibold shadow-sm'
+                    : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Location Filter */}
       <div className="space-y-2">
         <label className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
@@ -74,7 +104,7 @@ export default function JobFilters({
         </label>
         <div className="flex flex-wrap gap-1.5">
           {jobTypes.map((type) => {
-            const isSelected = filters.job_type === type;
+            const isSelected = (filters.job_type || '').toLowerCase() === type.toLowerCase();
             return (
               <button
                 key={type}
@@ -100,7 +130,7 @@ export default function JobFilters({
         </label>
         <div className="flex flex-wrap gap-1.5">
           {expLevels.map((lvl) => {
-            const isSelected = filters.experience_level === lvl;
+            const isSelected = (filters.experience_level || '').toLowerCase() === lvl.toLowerCase();
             return (
               <button
                 key={lvl}
@@ -170,6 +200,15 @@ export default function JobFilters({
           })}
         </div>
       </div>
+
+      {/* Mobile Apply Button */}
+      {onApply && (
+        <div className="pt-2">
+          <Button variant="primary" className="w-full py-2.5 text-xs font-bold" onClick={onApply}>
+            Show Results
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

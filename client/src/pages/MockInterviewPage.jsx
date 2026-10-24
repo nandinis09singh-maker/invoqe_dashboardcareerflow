@@ -31,6 +31,12 @@ import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
+import {
+  fetchInterviewHistory,
+  generateMockQuestions,
+  evaluateMockAnswer,
+  saveInterviewSession
+} from '../utils/interviewService';
 import Button from '../components/ui/Button';
 
 const ROLE_OPTIONS = [
@@ -98,10 +104,8 @@ export default function MockInterviewPage() {
   async function fetchHistory() {
     try {
       setIsLoadingHistory(true);
-      const res = await api.get('/interviews/history');
-      if (res.data.success) {
-        setHistoryList(res.data.sessions || []);
-      }
+      const sessions = await fetchInterviewHistory();
+      setHistoryList(sessions || []);
     } catch (e) {
       console.error('Failed to load history', e);
     } finally {
@@ -199,7 +203,7 @@ export default function MockInterviewPage() {
   const handleStartInterview = async () => {
     try {
       setIsLoading(true);
-      const res = await api.post('/interviews/generate', {
+      const generatedQuestions = await generateMockQuestions({
         role: selectedRole.slug,
         role_title: selectedRole.title,
         interview_type: interviewType,
@@ -207,8 +211,8 @@ export default function MockInterviewPage() {
         job_description: jobDescription
       });
 
-      if (res.data.success && res.data.questions?.length > 0) {
-        setQuestions(res.data.questions);
+      if (generatedQuestions && generatedQuestions.length > 0) {
+        setQuestions(generatedQuestions);
         setCurrentIndex(0);
         setUserAnswer('');
         setAnswersHistory([]);
@@ -217,8 +221,7 @@ export default function MockInterviewPage() {
         setShowHint(false);
         setMode('interview');
 
-        // Optional prompt speech
-        speakQuestion(res.data.questions[0].question);
+        speakQuestion(generatedQuestions[0].question);
         toast.success('Interview started! Good luck.');
       }
     } catch (e) {
@@ -328,9 +331,9 @@ export default function MockInterviewPage() {
         summary_feedback: summary
       };
 
-      const res = await api.post('/interviews/save', payload);
+      const res = await saveInterviewSession(payload);
 
-      if (res.data.success) {
+      if (res.success) {
         setFinalReport(payload);
         setMode('report');
         confetti({

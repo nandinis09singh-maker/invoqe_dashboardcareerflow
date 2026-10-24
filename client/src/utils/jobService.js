@@ -23,6 +23,7 @@ export async function fetchJobsList(params = {}) {
   // Client-side fallback filtering
   let filtered = [...FALLBACK_JOBS];
 
+  // 1. Search Query
   const search = (params.search || '').toLowerCase().trim();
   if (search) {
     filtered = filtered.filter((j) => {
@@ -31,39 +32,63 @@ export async function fetchJobsList(params = {}) {
       const descMatch = (j.description || '').toLowerCase().includes(search);
       const skillMatch = (j.skills || []).some((s) => s.toLowerCase().includes(search));
       const locMatch = (j.location || '').toLowerCase().includes(search);
-      return titleMatch || companyMatch || descMatch || skillMatch || locMatch;
+      const catMatch = (j.category || '').toLowerCase().includes(search);
+      const typeMatch = (j.job_type || '').toLowerCase().includes(search);
+      return titleMatch || companyMatch || descMatch || skillMatch || locMatch || catMatch || typeMatch;
     });
   }
 
+  // 2. Location
   if (params.location && params.location !== 'All') {
-    filtered = filtered.filter(
-      (j) => (j.location || '').toLowerCase() === params.location.toLowerCase()
-    );
+    const targetLoc = params.location.toLowerCase().trim();
+    filtered = filtered.filter((j) => {
+      const loc = (j.location || '').toLowerCase();
+      if (targetLoc === 'remote') {
+        return loc.includes('remote') || (j.job_type || '').toLowerCase() === 'remote' || j.is_remote === 1;
+      }
+      return loc.includes(targetLoc);
+    });
   }
 
+  // 3. Job Type
   if (params.job_type && params.job_type !== 'All') {
-    filtered = filtered.filter(
-      (j) => (j.job_type || '').toLowerCase() === params.job_type.toLowerCase()
-    );
+    const targetType = params.job_type.toLowerCase().trim();
+    filtered = filtered.filter((j) => {
+      const jt = (j.job_type || '').toLowerCase();
+      if (targetType === 'remote') {
+        return jt === 'remote' || (j.location || '').toLowerCase().includes('remote') || j.is_remote === 1;
+      }
+      return jt === targetType || jt.includes(targetType);
+    });
   }
 
+  // 4. Experience Level
   if (params.experience_level && params.experience_level !== 'All') {
-    filtered = filtered.filter(
-      (j) => (j.experience_level || '').toLowerCase() === params.experience_level.toLowerCase()
-    );
+    const targetExp = params.experience_level.toLowerCase().trim();
+    filtered = filtered.filter((j) => {
+      const el = (j.experience_level || '').toLowerCase();
+      return el === targetExp || el.includes(targetExp) || targetExp.includes(el);
+    });
   }
 
+  // 5. Category / Department
   if (params.category && params.category !== 'All') {
-    filtered = filtered.filter(
-      (j) => (j.category || '').toLowerCase() === params.category.toLowerCase()
-    );
+    const targetCat = params.category.toLowerCase().trim();
+    filtered = filtered.filter((j) => {
+      const cat = (j.category || '').toLowerCase();
+      return cat === targetCat || cat.includes(targetCat) || targetCat.includes(cat);
+    });
   }
 
+  // 6. Minimum Salary (in LPA)
   if (params.salary_min && !isNaN(Number(params.salary_min))) {
     const min = Number(params.salary_min);
-    filtered = filtered.filter((j) => (j.salary_max || 0) >= min);
+    if (min > 0) {
+      filtered = filtered.filter((j) => (j.salary_max || j.salary_min || 0) >= min);
+    }
   }
 
+  // 7. Skills
   if (params.skills) {
     const skillFilters = params.skills
       .split(',')
@@ -72,21 +97,21 @@ export async function fetchJobsList(params = {}) {
     if (skillFilters.length > 0) {
       filtered = filtered.filter((j) => {
         const jobSkills = (j.skills || []).map((s) => s.toLowerCase());
-        return skillFilters.some((sf) => jobSkills.includes(sf));
+        return skillFilters.some((sf) => jobSkills.some((js) => js.includes(sf)));
       });
     }
   }
 
-  // Sorting
+  // 8. Sorting
   const sort = params.sort || 'newest';
   if (sort === 'salary_desc') {
     filtered.sort((a, b) => (b.salary_max || 0) - (a.salary_max || 0));
   } else if (sort === 'salary_asc') {
     filtered.sort((a, b) => (a.salary_min || 0) - (b.salary_min || 0));
   } else if (sort === 'match') {
-    filtered.sort((a, b) => (b.match_percentage || 0) - (a.match_percentage || 0));
+    filtered.sort((a, b) => (b.match_percentage || 75) - (a.match_percentage || 75));
   } else {
-    // newest (by id desc)
+    // Newest
     filtered.sort((a, b) => (b.id || 0) - (a.id || 0));
   }
 

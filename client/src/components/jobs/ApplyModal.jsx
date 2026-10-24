@@ -4,6 +4,8 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
+import { submitApplication } from '../../utils/applicationService';
+import { fetchResumesList } from '../../utils/resumeService';
 import toast from 'react-hot-toast';
 import { FileText, Upload, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 
@@ -28,10 +30,10 @@ export default function ApplyModal({ isOpen, onClose, job, onSuccess }) {
     if (isOpen) {
       async function loadResumes() {
         try {
-          const res = await api.get('/resumes');
-          if (res.data.success && res.data.resumes?.length > 0) {
-            setSavedResumes(res.data.resumes);
-            setSelectedResumeId(res.data.resumes[0].id.toString());
+          const list = await fetchResumesList();
+          if (list && list.length > 0) {
+            setSavedResumes(list);
+            setSelectedResumeId(list[0].id.toString());
             setResumeSource('saved_resume');
           } else if (hasProfileResume) {
             setResumeSource('profile_resume');
@@ -62,34 +64,20 @@ export default function ApplyModal({ isOpen, onClose, job, onSuccess }) {
 
     try {
       setIsSubmitting(true);
-      const formData = new FormData();
-      formData.append('cover_letter', coverLetter);
-      formData.append('notes', notes);
-
-      if (resumeSource === 'saved_resume') {
-        formData.append('resume_id', selectedResumeId);
-        formData.append('use_profile_resume', 'false');
-      } else if (resumeSource === 'profile_resume') {
-        formData.append('use_profile_resume', 'true');
-      } else if (resumeSource === 'upload' && resumeFile) {
-        formData.append('resume', resumeFile);
-        formData.append('use_profile_resume', 'false');
-      }
-
-      const res = await api.post(`/jobs/${job.id}/apply`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const res = await submitApplication(job, {
+        cover_letter: coverLetter,
+        notes,
+        resume_id: selectedResumeId,
+        resume: resumeFile
       });
 
-      if (res.data.success) {
-        toast.success(res.data.message || 'Application submitted successfully!');
+      if (res.success) {
+        toast.success(res.message || 'Application submitted successfully!');
         if (onSuccess) onSuccess();
         onClose();
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to submit application.';
-      toast.error(msg);
+      toast.error('Failed to submit application.');
     } finally {
       setIsSubmitting(false);
     }

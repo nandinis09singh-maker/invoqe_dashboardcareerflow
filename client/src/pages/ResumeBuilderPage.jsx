@@ -14,6 +14,13 @@ import {
   ExternalLink
 } from 'lucide-react';
 import api from '../api/axios';
+import {
+  fetchResumesList,
+  createResumeDoc,
+  deleteResumeDoc,
+  duplicateResumeDoc,
+  updateResumeDoc
+} from '../utils/resumeService';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
@@ -53,10 +60,8 @@ export default function ResumeBuilderPage() {
   const fetchResumes = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get('/resumes');
-      if (res.data.success) {
-        setResumes(res.data.resumes || []);
-      }
+      const data = await fetchResumesList();
+      setResumes(data || []);
     } catch (err) {
       console.error('Failed to load resumes', err);
       toast.error('Failed to load your resumes.');
@@ -78,20 +83,20 @@ export default function ResumeBuilderPage() {
 
     try {
       setIsCreating(true);
-      const res = await api.post('/resumes', {
+      const res = await createResumeDoc({
         title: newTitle.trim(),
         template: selectedTemplate,
         accent_color: selectedTemplate === 'creative' ? '#7c3aed' : '#4f46e5',
         font_family: selectedTemplate === 'classic' ? 'serif' : 'sans'
       });
 
-      if (res.data.success) {
+      if (res.success) {
         toast.success('Resume created successfully!');
         setIsCreateModalOpen(false);
-        navigate(`/resume-builder/${res.data.resume.id}`);
+        navigate(`/resume-builder/${res.resume.id}`);
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create resume.');
+      toast.error('Failed to create resume.');
     } finally {
       setIsCreating(false);
     }
@@ -102,19 +107,16 @@ export default function ResumeBuilderPage() {
     if (!renameTitle.trim() || !activeResumeForRename) return;
 
     try {
-      const res = await api.put(`/resumes/${activeResumeForRename.id}`, {
+      await updateResumeDoc(activeResumeForRename.id, {
         title: renameTitle.trim()
       });
-
-      if (res.data.success) {
-        toast.success('Resume renamed!');
-        setIsRenameModalOpen(false);
-        setResumes((prev) =>
-          prev.map((r) =>
-            r.id === activeResumeForRename.id ? { ...r, title: renameTitle.trim() } : r
-          )
-        );
-      }
+      toast.success('Resume renamed!');
+      setIsRenameModalOpen(false);
+      setResumes((prev) =>
+        prev.map((r) =>
+          r.id === activeResumeForRename.id ? { ...r, title: renameTitle.trim() } : r
+        )
+      );
     } catch (err) {
       toast.error('Failed to rename resume.');
     }
@@ -122,8 +124,8 @@ export default function ResumeBuilderPage() {
 
   const handleDuplicate = async (id) => {
     try {
-      const res = await api.post(`/resumes/${id}/duplicate`);
-      if (res.data.success) {
+      const res = await duplicateResumeDoc(id);
+      if (res.success) {
         toast.success('Resume duplicated!');
         fetchResumes();
       }
@@ -134,11 +136,9 @@ export default function ResumeBuilderPage() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await api.delete(`/resumes/${id}`);
-      if (res.data.success) {
-        toast.success('Resume deleted.');
-        setResumes((prev) => prev.filter((r) => r.id !== id));
-      }
+      await deleteResumeDoc(id);
+      toast.success('Resume deleted.');
+      setResumes((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
       toast.error('Failed to delete resume.');
     }

@@ -44,30 +44,38 @@ export default function JobsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Debounce search input by 400ms
+  // Keep state synchronized with URL searchParams
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    setSearchTerm(urlSearch);
+    setDebouncedSearch(urlSearch);
+    setFilters({
+      location: searchParams.get('location') || '',
+      job_type: searchParams.get('job_type') || '',
+      experience_level: searchParams.get('experience_level') || '',
+      category: searchParams.get('category') || '',
+      salary_min: searchParams.get('salary_min') || '',
+      skills: searchParams.get('skills') || '',
+      sort: searchParams.get('sort') || 'newest',
+      page: parseInt(searchParams.get('page'), 10) || 1
+    });
+  }, [searchParams]);
+
+  // Debounce search input and sync to URL
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
-      setFilters(prev => ({ ...prev, page: 1 }));
-    }, 400);
+      const params = new URLSearchParams(searchParams);
+      if (searchTerm) {
+        params.set('search', searchTerm);
+      } else {
+        params.delete('search');
+      }
+      params.set('page', '1');
+      setSearchParams(params, { replace: true });
+    }, 350);
     return () => clearTimeout(handler);
   }, [searchTerm]);
-
-  // Sync state to URL search params
-  useEffect(() => {
-    const params = new URLSearchParams();
-    if (debouncedSearch) params.set('search', debouncedSearch);
-    if (filters.location) params.set('location', filters.location);
-    if (filters.job_type) params.set('job_type', filters.job_type);
-    if (filters.experience_level) params.set('experience_level', filters.experience_level);
-    if (filters.category) params.set('category', filters.category);
-    if (filters.salary_min) params.set('salary_min', filters.salary_min);
-    if (filters.skills) params.set('skills', filters.skills);
-    if (filters.sort && filters.sort !== 'newest') params.set('sort', filters.sort);
-    if (filters.page && filters.page > 1) params.set('page', filters.page.toString());
-
-    setSearchParams(params, { replace: true });
-  }, [debouncedSearch, filters, setSearchParams]);
 
   // Load filter metadata once
   useEffect(() => {
@@ -119,7 +127,18 @@ export default function JobsPage() {
   }, [fetchJobs]);
 
   const handleFilterChange = (newPartialFilters) => {
-    setFilters(prev => ({ ...prev, ...newPartialFilters, page: 1 }));
+    const nextFilters = { ...filters, ...newPartialFilters, page: 1 };
+    setFilters(nextFilters);
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (nextFilters.location) params.set('location', nextFilters.location);
+    if (nextFilters.job_type) params.set('job_type', nextFilters.job_type);
+    if (nextFilters.experience_level) params.set('experience_level', nextFilters.experience_level);
+    if (nextFilters.category) params.set('category', nextFilters.category);
+    if (nextFilters.salary_min) params.set('salary_min', nextFilters.salary_min);
+    if (nextFilters.skills) params.set('skills', nextFilters.skills);
+    if (nextFilters.sort && nextFilters.sort !== 'newest') params.set('sort', nextFilters.sort);
+    setSearchParams(params, { replace: true });
   };
 
   const handleResetFilters = () => {
@@ -135,6 +154,7 @@ export default function JobsPage() {
       sort: 'newest',
       page: 1
     });
+    setSearchParams({}, { replace: true });
   };
 
   const handlePageChange = (newPage) => {
@@ -225,7 +245,7 @@ export default function JobsPage() {
                 <button
                   key={brand}
                   type="button"
-                  onClick={() => setSearchTerm(isActive ? '' : brand)}
+                  onClick={() => { const next = isActive ? '' : brand; setSearchTerm(next); setDebouncedSearch(next); const params = new URLSearchParams(searchParams); if (next) params.set('search', next); else params.delete('search'); params.set('page', '1'); setSearchParams(params, { replace: true }); }}
                   className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 border cursor-pointer ${
                     isActive
                       ? 'bg-brand-600 text-white border-brand-600 shadow-sm'

@@ -19,6 +19,11 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import api from '../api/axios';
+import {
+  fetchApplicationsList,
+  updateAppStatus,
+  withdrawApp
+} from '../utils/applicationService';
 import toast from 'react-hot-toast';
 
 export default function ApplicationsPage() {

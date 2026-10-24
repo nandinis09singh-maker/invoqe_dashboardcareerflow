@@ -21,6 +21,7 @@ import ApplyModal from '../components/jobs/ApplyModal';
 import JobCard from '../components/jobs/JobCard';
 import api from '../api/axios';
 import { fetchJobDetails } from '../utils/jobService';
+import { toggleJobSave, isJobSavedLocally } from '../utils/savedJobService';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -46,7 +47,7 @@ export default function JobDetailsPage() {
         const data = await fetchJobDetails(id);
         if (data.job) {
           setJob(data.job);
-          setIsSaved(Boolean(data.job.is_saved));
+          setIsSaved(Boolean(data.job.is_saved || isJobSavedLocally(id)));
           setIsApplied(Boolean(data.job.is_applied));
           setSimilarJobs(data.similarJobs || []);
         } else {

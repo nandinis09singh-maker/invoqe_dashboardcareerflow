@@ -17,11 +17,12 @@ import Button from '../ui/Button';
 import ApplyModal from './ApplyModal';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
+import { toggleJobSave, isJobSavedLocally } from '../../utils/savedJobService';
 import toast from 'react-hot-toast';
 
 export default function JobCard({ job, onSaveToggle, onApplySuccess }) {
   const { isAuthenticated } = useAuth();
-  const [isSaved, setIsSaved] = useState(job.is_saved);
+  const [isSaved, setIsSaved] = useState(Boolean(job.is_saved || isJobSavedLocally(job.id)));
   const [isApplied, setIsApplied] = useState(job.is_applied);
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
@@ -37,12 +38,12 @@ export default function JobCard({ job, onSaveToggle, onApplySuccess }) {
 
     try {
       setIsSaveLoading(true);
-      const res = await api.post(`/jobs/${job.id}/save`);
-      if (res.data.success) {
-        setIsSaved(res.data.is_saved);
-        toast.success(res.data.message);
+      const res = await toggleJobSave(job.id);
+      if (res.success) {
+        setIsSaved(res.is_saved);
+        toast.success(res.message);
         if (onSaveToggle) {
-          onSaveToggle(job.id, res.data.is_saved);
+          onSaveToggle(job.id, res.is_saved);
         }
       }
     } catch (err) {

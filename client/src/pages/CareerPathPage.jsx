@@ -26,6 +26,12 @@ import CareerGoalModal from '../components/career/CareerGoalModal';
 import MatchingJobsSection from '../components/career/MatchingJobsSection';
 import Button from '../components/ui/Button';
 import api from '../api/axios';
+import {
+  fetchCareerRoles,
+  fetchCareerRoleDetail,
+  fetchCareerGap,
+  toggleCareerSkillProgress
+} from '../utils/careerService';
 
 const ROLE_ICONS = {
   'frontend-developer': Layout,
@@ -52,10 +58,8 @@ export default function CareerPathPage() {
   useEffect(() => {
     async function fetchRoles() {
       try {
-        const res = await api.get('/career/roles');
-        if (res.data.success) {
-          setRoles(res.data.roles);
-        }
+        const data = await fetchCareerRoles();
+        setRoles(data || []);
       } catch (e) {
         console.error('Failed to load roles', e);
       }
@@ -68,23 +72,13 @@ export default function CareerPathPage() {
     async function loadRoleData() {
       try {
         setIsLoading(true);
-        try {
-          const roleRes = await api.get(`/career/roles/${selectedRoleSlug}`);
-          if (roleRes.data.success) {
-            setRoleDetail(roleRes.data.role);
-          }
-        } catch (err) {
-          console.error('Failed to load role roadmap:', err);
-        }
+        const role = await fetchCareerRoleDetail(selectedRoleSlug);
+        setRoleDetail(role);
 
-        try {
-          const gapRes = await api.get(`/career/gap/${selectedRoleSlug}`);
-          if (gapRes.data.success) {
-            setGapData(gapRes.data);
-          }
-        } catch (err) {
-          console.error('Failed to load skill gap data:', err);
-        }
+        const gap = await fetchCareerGap(selectedRoleSlug);
+        setGapData(gap);
+      } catch (err) {
+        console.error('Failed to load role data:', err);
       } finally {
         setIsLoading(false);
       }
